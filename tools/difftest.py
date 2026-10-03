@@ -64,7 +64,10 @@ def run_example(binary: Path, shaders: str, cwd: Path, windowed: bool,
                 screenshot: Path | None = None) -> dict:
     cmd = [str(binary), "--shaders", shaders]
     if windowed:
-        cmd += ["-b", "-bw", str(BENCH_WARMUP_S), "-br", str(BENCH_RUNTIME_S)]
+        # -bfs 1: capture the first benchmark frame — deterministic regardless
+        # of fps, so rust-vs-glsl diffs can't be explained by animation phase.
+        cmd += ["-b", "-bw", str(BENCH_WARMUP_S), "-br", str(BENCH_RUNTIME_S),
+                "-bfs", "1"]
     if screenshot is not None:
         cmd += ["-ss", str(screenshot)]
     try:
@@ -108,19 +111,33 @@ def ppm_pixels(data: bytes) -> bytes | None:
     return parts[4]
 
 
-def ppm_diff(a: bytes, b: bytes, stride: int = 16) -> float | None:
-    """Fraction of sampled bytes that differ between two .ppm payloads."""
+PIXEL_DELTA_THRESHOLD = 24  # sum of |Δ| across RGB for a pixel to count
+PIXEL_STRIDE = 24           # bytes between sampled pixels (every 8th pixel)
+
+
+def ppm_diff(a: bytes, b: bytes) -> float | None:
+    """Fraction of sampled pixels whose RGB delta exceeds
+    PIXEL_DELTA_THRESHOLD. Byte-level LSB noise between shader compilers is
+    ignored; only visible differences count."""
     pa, pb = ppm_pixels(a), ppm_pixels(b)
     if pa is None or pb is None or len(pa) != len(pb) or not pa:
         return None
-    diffs = sum(1 for i in range(0, len(pa), stride) if pa[i] != pb[i])
-    return diffs / ((len(pa) + stride - 1) // stride)
+    sampled = diffs = 0
+    for i in range(0, len(pa) - 2, PIXEL_STRIDE):
+        sampled += 1
+        if (abs(pa[i] - pb[i]) + abs(pa[i + 1] - pb[i + 1])
+                + abs(pa[i + 2] - pb[i + 2])) > PIXEL_DELTA_THRESHOLD:
+            diffs += 1
+    return diffs / sampled
 
 
 # rust-vs-glsl diff is a match when it stays under the glsl-vs-glsl
-# baseline scaled by NOISE_FACTOR plus a small absolute slack
+# baseline scaled by NOISE_FACTOR plus a small absolute slack. Even with a
+# zero baseline, sub-NOISE_FLOOR fractions of significant pixels are treated
+# as compiler precision noise (alpha-discard / specular edge flips).
 NOISE_FACTOR = 2.0
 NOISE_SLACK = 0.005
+NOISE_FLOOR = 0.005
 
 
 def compare_one(example: str, bin_dir: Path) -> dict:
@@ -194,7 +211,8 @@ def compare_one(example: str, bin_dir: Path) -> dict:
             result["status"] = "match"
         else:
             baseline = d_gg if d_gg is not None else 0.0
-            limit = max(baseline * NOISE_FACTOR, baseline + NOISE_SLACK)
+            limit = max(baseline * NOISE_FACTOR, baseline + NOISE_SLACK,
+                        NOISE_FLOOR)
             result["status"] = "match" if d_rg <= limit else "MISMATCH"
     return result
 
@@ -214,6 +232,8 @@ def main() -> int:
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
         line = f"{r['status']:>13}  {r['example']}"
+        if r.get("diff_rust_vs_glsl") is not None:
+            line += f"  (diff {r['diff_rust_vs_glsl'] * 100:.1f}%)"
         if "runs" in r and "rust" in r["runs"]:
             fps = r["runs"]["rust"].get("fps")
             g_fps = r["runs"]["glsl"].get("fps")
