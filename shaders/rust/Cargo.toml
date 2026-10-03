@@ -76,6 +76,8 @@ members = [
     "offscreen/mirror",
     "offscreen/phong",
     "offscreen/quad",
+    "oit/color",
+    "oit/geometry",
     "parallaxmapping/parallax",
     "particlesystem/particle",
     "particlesystem/normalmap",
@@ -153,7 +155,11 @@ members = [
 edition = "2021"
 
 [workspace.dependencies]
-spirv-std = { git = "https://github.com/rust-gpu/rust-gpu.git", branch = "main" }
+# Pinned to a specific rev for reproducibility; bump deliberately.
+# spirv-std revisions pair with a specific Rust toolchain (see
+# rustc_codegen_spirv's REQUIRED_RUST_TOOLCHAIN), and this rev is the one
+# the checked-in Cargo.lock resolves against.
+spirv-std = { git = "https://github.com/rust-gpu/rust-gpu.git", rev = "c49441a4c472098f5b221984f5bea1dbf866ad10" }
 
 [profile.release]
 panic = "abort"
