@@ -66,10 +66,11 @@ pub fn main_vs(
 
     let rot_mat = mz * my * mx;
 
-    *out_normal = (rot_mat * vec4(in_normal.x, in_normal.y, in_normal.z, 0.0)).truncate();
+    let rot_mat_t = rot_mat.transpose();
+    *out_normal = (rot_mat_t * vec4(in_normal.x, in_normal.y, in_normal.z, 0.0)).truncate();
 
     let scaled_pos = in_pos * instance_scale + instance_pos;
-    let pos = rot_mat * vec4(scaled_pos.x, scaled_pos.y, scaled_pos.z, 1.0);
+    let pos = rot_mat_t * vec4(scaled_pos.x, scaled_pos.y, scaled_pos.z, 1.0);
 
     *out_position = ubo.projection * ubo.modelview * pos;
 

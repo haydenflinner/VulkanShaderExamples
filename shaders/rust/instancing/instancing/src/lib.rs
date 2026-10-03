@@ -65,7 +65,7 @@ pub fn main_vs(
         vec4(0.0, 0.0, 0.0, 1.0),
     );
 
-    let loc_pos = rot_mat * in_pos;
+    let loc_pos = rot_mat.transpose() * in_pos;
     let pos = vec4(
         loc_pos.x * instance_scale + instance_pos.x,
         loc_pos.y * instance_scale + instance_pos.y,
