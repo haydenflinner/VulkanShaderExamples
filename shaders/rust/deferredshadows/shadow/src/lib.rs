@@ -26,7 +26,7 @@ pub fn main_vs(
     *out_position = in_pos;
 }
 
-#[spirv(geometry(triangles = 3, output_triangle_strip = 3, invocations = 3))]
+#[spirv(geometry(triangles, output_triangle_strip, output_vertices = 3, invocations = 3))]
 pub fn main_gs(
     #[spirv(position)] in_position: [Vec4; 3],
     in_instance_index: [u32; 3],

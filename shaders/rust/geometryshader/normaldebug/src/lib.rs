@@ -24,7 +24,7 @@ pub fn main_vs(
     *out_position = Vec4::new(in_pos.x, in_pos.y, in_pos.z, 1.0);
 }
 
-#[spirv(geometry(input_lines = 3, output_points = 6))]
+#[spirv(geometry(triangles, output_line_strip, output_vertices = 6))]
 pub fn main_gs(
     #[spirv(position)] in_position: [Vec4; 3],
     in_normal: [Vec3; 3],

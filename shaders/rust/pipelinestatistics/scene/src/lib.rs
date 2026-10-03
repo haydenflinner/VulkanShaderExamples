@@ -75,7 +75,7 @@ pub fn main_tcs(
     out_light_vec[idx] = in_light_vec[idx];
 }
 
-#[spirv(tessellation_evaluation(triangles))]
+#[spirv(tessellation_evaluation(triangles, spacing_equal, vertex_order_ccw))]
 pub fn main_tes(
     #[spirv(tess_coord)] tess_coord: Vec3,
     #[spirv(position)] in_position: [Vec4; 3],

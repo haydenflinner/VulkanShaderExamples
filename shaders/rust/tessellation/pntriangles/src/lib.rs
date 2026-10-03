@@ -129,7 +129,7 @@ pub fn main_tcs(
     tess_level_inner[0] = ubo.tess_level;
 }
 
-#[spirv(tessellation_evaluation(triangles, spacing_equal, vertex_order_cw))]
+#[spirv(tessellation_evaluation(triangles, spacing_fraction_odd, vertex_order_cw))]
 pub fn main_tes(
     #[spirv(tess_coord)] tess_coord: Vec3,
     #[spirv(position)] in_position: [Vec4; 3],

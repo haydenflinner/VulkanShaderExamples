@@ -14,7 +14,7 @@ pub struct Ubo {
     pub light_pos: Vec4,
 }
 
-#[spirv(geometry(triangles = 3, output_triangle_strip = 3, invocations = 2))]
+#[spirv(geometry(triangles, output_triangle_strip, output_vertices = 3, invocations = 2))]
 pub fn main_gs(
     #[spirv(position)] in_position: [Vec4; 3],
     in_normal: [Vec3; 3],

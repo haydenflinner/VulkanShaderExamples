@@ -39,7 +39,7 @@ pub fn main_tcs(
     out_uv[invocation_id as usize] = in_uv[invocation_id as usize];
 }
 
-#[spirv(tessellation_evaluation(triangles, spacing_equal, vertex_order_cw))]
+#[spirv(tessellation_evaluation(triangles, spacing_fraction_odd, vertex_order_cw))]
 pub fn main_tes(
     #[spirv(tess_coord)] tess_coord: Vec3,
     #[spirv(position)] in_position: [Vec4; 3],
