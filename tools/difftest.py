@@ -45,8 +45,13 @@ STDOUT_PAYLOAD = {
 }
 # Examples that are expected to need a window; run them in benchmark mode so
 # they self-terminate after warmup+runtime seconds.
-BENCH_WARMUP_S = 1
+# Warmup must be 0: it is time-based, so the number of warmup frames varies
+# with render speed and the captured frame would land at a different
+# animation phase per run. With -ft the timer advances a fixed step per
+# frame, so frame N is identical in every run regardless of fps.
+BENCH_WARMUP_S = 0
 BENCH_RUNTIME_S = 2
+FIXED_TIMESTEP_S = 0.016
 TIMEOUT_S = 90
 
 
@@ -64,10 +69,10 @@ def run_example(binary: Path, shaders: str, cwd: Path, windowed: bool,
                 screenshot: Path | None = None) -> dict:
     cmd = [str(binary), "--shaders", shaders]
     if windowed:
-        # -bfs 1: capture the first benchmark frame — deterministic regardless
-        # of fps, so rust-vs-glsl diffs can't be explained by animation phase.
+        # -bfs 1 -ft: capture benchmark frame 1 with a fixed timer step —
+        # deterministic animation state regardless of fps or warmup jitter.
         cmd += ["-b", "-bw", str(BENCH_WARMUP_S), "-br", str(BENCH_RUNTIME_S),
-                "-bfs", "1"]
+                "-bfs", "1", "-ft", str(FIXED_TIMESTEP_S)]
     if screenshot is not None:
         cmd += ["-ss", str(screenshot)]
     try:

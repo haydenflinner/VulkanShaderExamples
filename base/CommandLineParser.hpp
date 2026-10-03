@@ -114,4 +114,11 @@ public:
 		return int32_t();
 	}
 
+	float getValueAsFloat(std::string name, float defaultValue)
+	{
+		assert(options.find(name) != options.end());
+		std::string value = options[name].value;
+		return (value != "") ? strtof(value.c_str(), nullptr) : defaultValue;
+	}
+
 };

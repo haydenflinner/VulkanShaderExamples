@@ -110,6 +110,8 @@ protected:
 				case VK_SHADER_STAGE_GEOMETRY_BIT: return "main_gs";
 				case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT: return "main_tcs";
 				case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return "main_tes";
+				case VK_SHADER_STAGE_MESH_BIT_EXT: return "main_mesh";
+				case VK_SHADER_STAGE_TASK_BIT_EXT: return "main_task";
 				default: return "main";
 			}
 		}
@@ -227,6 +229,9 @@ public:
 	float timer = 0.0f;
 	// Multiplier for speeding up (or slowing down) the global timer
 	float timerSpeed = 0.25f;
+	// When > 0, frameTimer is pinned to this value each frame so animation
+	// state is a pure function of frame count (difftest determinism, -ft flag)
+	float fixedTimeStep = 0.0f;
 	bool paused = false;
 
 	Camera camera;

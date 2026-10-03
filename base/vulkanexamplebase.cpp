@@ -265,6 +265,7 @@ void VulkanExampleBase::nextFrame()
 	auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 #endif
 	frameTimer = (float)tDiff / 1000.0f;
+	if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 	camera.update(frameTimer);
 	// Convert to clamped timer value
 	if (!paused)
@@ -386,6 +387,7 @@ void VulkanExampleBase::renderLoop()
 			auto tEnd = std::chrono::high_resolution_clock::now();
 			auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 			frameTimer = tDiff / 1000.0f;
+		if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 			camera.update(frameTimer);
 			// Convert to clamped timer value
 			if (!paused)
@@ -448,6 +450,7 @@ void VulkanExampleBase::renderLoop()
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = tDiff / 1000.0f;
+		if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 		camera.update(frameTimer);
 		// Convert to clamped timer value
 		if (!paused)
@@ -481,6 +484,7 @@ void VulkanExampleBase::renderLoop()
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = tDiff / 1000.0f;
+		if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 		camera.update(frameTimer);
 		// Convert to clamped timer value
 		if (!paused)
@@ -525,6 +529,7 @@ void VulkanExampleBase::renderLoop()
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = tDiff / 1000.0f;
+		if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 		camera.update(frameTimer);
 		// Convert to clamped timer value
 		if (!paused)
@@ -565,6 +570,7 @@ void VulkanExampleBase::renderLoop()
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = tDiff / 1000.0f;
+		if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 		camera.update(frameTimer);
 		// Convert to clamped timer value
 		if (!paused)
@@ -600,6 +606,7 @@ void VulkanExampleBase::renderLoop()
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = tDiff / 1000.0f;
+		if (fixedTimeStep > 0.0f) { frameTimer = fixedTimeStep; }
 		camera.update(frameTimer);
 		// Convert to clamped timer value
 		timer += timerSpeed * frameTimer;
@@ -963,6 +970,7 @@ VulkanExampleBase::VulkanExampleBase()
 	commandLineParser.add("benchmarkresultfile", { "-bf", "--benchfilename" }, 1, "Set file name for benchmark results");
 	commandLineParser.add("benchmarkresultframes", { "-bt", "--benchframetimes" }, 0, "Save frame times to benchmark results file");
 	commandLineParser.add("benchmarkframes", { "-bfs", "--benchmarkframes" }, 1, "Only render the given number of frames");
+	commandLineParser.add("fixedtimestep", { "-ft", "--fixedtimestep" }, 1, "Advance timer by a fixed delta per frame (deterministic animation for difftests)");
 	commandLineParser.add("screenshot", { "-ss", "--screenshot" }, 1, "Save the last rendered frame to a .ppm screenshot file after the run finishes");
 #if (!(defined(VK_USE_PLATFORM_IOS_MVK) || defined(VK_USE_PLATFORM_MACOS_MVK) || defined(VK_USE_PLATFORM_METAL_EXT)))
 	commandLineParser.add("resourcepath", { "-rp", "--resourcepath" }, 1, "Set path for dir where assets and shaders folder is present");
@@ -1021,6 +1029,9 @@ VulkanExampleBase::VulkanExampleBase()
 	}
 	if (commandLineParser.isSet("benchmarkframes")) {
 		benchmark.outputFrames = commandLineParser.getValueAsInt("benchmarkframes", benchmark.outputFrames);
+	}
+	if (commandLineParser.isSet("fixedtimestep")) {
+		fixedTimeStep = commandLineParser.getValueAsFloat("fixedtimestep", 0.0f);
 	}
 	if (commandLineParser.isSet("screenshot")) {
 		screenshotFilename = commandLineParser.getValueAsString("screenshot", "");
