@@ -116,7 +116,7 @@ fn parallax_occlusion_mapping(
     let prev_depth =
         1.0 - normal_height_map.sample_by_lod(*sampler, prev_uv, 0.0).w - curr_layer_depth
             + layer_depth;
-    prev_uv.lerp(curr_uv, next_depth / (next_depth - prev_depth))
+    curr_uv.lerp(prev_uv, next_depth / (next_depth - prev_depth))
 }
 
 #[spirv(fragment)]

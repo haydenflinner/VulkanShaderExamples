@@ -35,9 +35,13 @@ pub fn main_vs(
 
     let model_view = ubo.view * model;
     let pos = model_view * in_pos;
-    *out_eye_pos = pos.truncate();
+    // GLSL: outEyePos = vec3(modelView * pos) — modelView applied twice.
+    *out_eye_pos = (model_view * pos).truncate();
 
-    let light_pos = model_view * vec4(ubo.lightpos.x, ubo.lightpos.y, ubo.lightpos.z, 1.0);
+    // GLSL: vec4(lightPos.xyz, 1.0) * modelView — row-vector times matrix,
+    // i.e. modelView.transpose() * lightPos as a column-vector.
+    let light_pos = model_view.transpose()
+        * vec4(ubo.lightpos.x, ubo.lightpos.y, ubo.lightpos.z, 1.0);
     *out_light_vec = (light_pos.truncate() - *out_eye_pos).normalize();
 
     *out_position = ubo.projection * pos;

@@ -38,7 +38,8 @@ pub fn main_vs(
     *out_color = in_color;
     *out_position = ubo.projection * pos;
     *out_eye_pos = (model_view * pos).xyz();
-    let light_pos = model_view * vec4(1.0, 2.0, 0.0, 1.0);
+    // GLSL: vec4(1.0, 2.0, 0.0, 1.0) * modelView — row-vector times matrix.
+    let light_pos = model_view.transpose() * vec4(1.0, 2.0, 0.0, 1.0);
     *out_light_vec = (light_pos.xyz() - *out_eye_pos).normalize();
 }
 

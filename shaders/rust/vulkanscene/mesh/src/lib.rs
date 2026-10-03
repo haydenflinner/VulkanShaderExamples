@@ -39,7 +39,9 @@ pub fn main_vs(
     let pos = model_view * in_pos;
     *out_position = ubo.projection * pos;
     *out_eye_pos = (model_view * pos).xyz();
-    let light_pos = model_view * vec4(ubo.lightpos.x, ubo.lightpos.y, ubo.lightpos.z, 1.0);
+    // GLSL: vec4(ubo.lightpos, 1.0) * modelView — row-vector times matrix.
+    let light_pos = model_view.transpose()
+        * vec4(ubo.lightpos.x, ubo.lightpos.y, ubo.lightpos.z, 1.0);
     *out_light_vec = (light_pos.xyz() - *out_eye_pos).normalize();
 }
 
