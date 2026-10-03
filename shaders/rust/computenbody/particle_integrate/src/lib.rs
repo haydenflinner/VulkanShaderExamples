@@ -45,12 +45,13 @@ pub fn main_cs(
     );
 
     // Euler integration: position += velocity * deltaTime
+    // (GLSL adds to all 4 components, w included)
     position = position
         + vec4(
             velocity.x * ubo.delta_t,
             velocity.y * ubo.delta_t,
             velocity.z * ubo.delta_t,
-            0.0,
+            velocity.w * ubo.delta_t,
         );
 
     particles[index].pos = [position.x, position.y, position.z, position.w];

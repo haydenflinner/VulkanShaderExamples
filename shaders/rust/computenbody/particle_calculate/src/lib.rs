@@ -82,7 +82,7 @@ pub fn main_cs(
             let other = shared_data[j];
             let len = other.xyz() - position.xyz();
             let distance_sq = len.dot(len) + ubo.soften;
-            acceleration += ubo.gravity * len * other.w / distance_sq.powf(ubo.power * 0.5);
+            acceleration += ubo.gravity * len * other.w / distance_sq.powf(ubo.power);
         }
 
         // Synchronize before next iteration

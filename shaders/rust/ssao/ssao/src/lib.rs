@@ -1,11 +1,12 @@
 #![no_std]
 
-use spirv_std::glam::{vec2, vec4, Mat3, Mat4, Vec2, Vec4, Vec4Swizzles};
+use spirv_std::glam::{vec2, vec4, Mat3, Mat4, UVec2, Vec2, Vec4, Vec4Swizzles};
 use spirv_std::spirv;
 use spirv_std::{Image, Sampler};
 
 const SSAO_KERNEL_SIZE: usize = 64;
-const SSAO_RADIUS: f32 = 0.5;
+// Matches the SSAO_RADIUS specialization constant in examples/ssao
+const SSAO_RADIUS: f32 = 0.3;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -17,7 +18,6 @@ pub struct UBOSSAOKernel {
 #[derive(Copy, Clone)]
 pub struct UBO {
     pub projection: Mat4,
-    pub noise_scale: Vec2,
 }
 
 #[spirv(fragment)]
@@ -40,7 +40,12 @@ pub fn main_fs(
     let normal = (texture_normal.sample(*sampler_normal, in_uv).xyz() * 2.0 - 1.0).normalize();
 
     // Get a random vector using a noise lookup
-    let noise_uv = ubo.noise_scale * in_uv;
+    let tex_dim: UVec2 = texture_position_depth.query_size_lod(0);
+    let noise_dim: UVec2 = texture_ssao_noise.query_size_lod(0);
+    let noise_uv = vec2(
+        tex_dim.x as f32 / noise_dim.x as f32,
+        tex_dim.y as f32 / noise_dim.y as f32,
+    ) * in_uv;
     let random_vec = texture_ssao_noise
         .sample(*sampler_ssao_noise, noise_uv)
         .xyz()

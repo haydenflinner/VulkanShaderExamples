@@ -327,7 +327,7 @@ public:
 			VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &compute.descriptorSets[i]));
 			std::vector<VkWriteDescriptorSet> computeWriteDescriptorSets = {
 				// Binding 0 : Previous particles storage buffer
-				vks::initializers::writeDescriptorSet(compute.descriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &storageBuffers[(i - 1) % maxConcurrentFrames].descriptor),
+				vks::initializers::writeDescriptorSet(compute.descriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &storageBuffers[(i + maxConcurrentFrames - 1) % maxConcurrentFrames].descriptor),
 				// Binding 1 : Current particles storage buffer
 				vks::initializers::writeDescriptorSet(compute.descriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, &storageBuffers[i].descriptor),
 				// Binding 2 : Uniform buffer

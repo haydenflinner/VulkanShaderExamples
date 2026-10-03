@@ -11,3 +11,5 @@ spirv-std = { workspace = true }
 
 [features]
 default = []
+[package.metadata.rust-gpu.build]
+capabilities = ["ImageQuery"]
