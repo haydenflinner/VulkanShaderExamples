@@ -9,9 +9,12 @@ Three comparison modes, picked automatically per example:
                writes headless.ppm); files are byte-compared.
   * stdout   — example prints computed results (e.g. computeheadless prints
                the buffer contents); the printed payload is compared.
-  * benchmark — windowed example run with -b (renders warmup+duration
-               seconds, then exits cleanly). Parity = both runs render
-               without errors; fps is recorded for benchmark triage.
+  * screenshot — windowed example run with -b -ss (benchmark mode, then
+               dump the last frame to .ppm). The rust frame is diffed
+               against the glsl frame; a second glsl run provides the
+               run-to-run noise baseline (animated scenes can't be
+               byte-exact across runs). MATCH = rust-vs-glsl diff within
+               the glsl-vs-glsl baseline; fps is recorded for triage.
 
 Usage:
     tools/difftest.py [--bin-dir build/bin] [--examples a b c] [--json out.json]
@@ -57,10 +60,13 @@ def rust_covered_examples() -> list[str]:
     return out
 
 
-def run_example(binary: Path, shaders: str, cwd: Path, windowed: bool) -> dict:
+def run_example(binary: Path, shaders: str, cwd: Path, windowed: bool,
+                screenshot: Path | None = None) -> dict:
     cmd = [str(binary), "--shaders", shaders]
     if windowed:
         cmd += ["-b", "-bw", str(BENCH_WARMUP_S), "-br", str(BENCH_RUNTIME_S)]
+    if screenshot is not None:
+        cmd += ["-ss", str(screenshot)]
     try:
         proc = subprocess.run(
             cmd, cwd=cwd, stdin=subprocess.DEVNULL,
@@ -89,6 +95,32 @@ def extract_payload(stdout: str, pattern: str) -> str:
 def fps_from(stdout: str) -> float | None:
     m = re.search(r"fps\s*:\s*([0-9.]+)", stdout)
     return float(m.group(1)) if m else None
+
+
+def ppm_pixels(data: bytes) -> bytes | None:
+    """Return the raw RGB payload of a binary P6 .ppm, or None if unparseable."""
+    if not data.startswith(b"P6"):
+        return None
+    # header is "P6\n<w>\n<h>\n<max>\n"; max ends with one whitespace byte
+    parts = data.split(None, 4)
+    if len(parts) < 5 or parts[3] != b"255":
+        return None
+    return parts[4]
+
+
+def ppm_diff(a: bytes, b: bytes, stride: int = 16) -> float | None:
+    """Fraction of sampled bytes that differ between two .ppm payloads."""
+    pa, pb = ppm_pixels(a), ppm_pixels(b)
+    if pa is None or pb is None or len(pa) != len(pb) or not pa:
+        return None
+    diffs = sum(1 for i in range(0, len(pa), stride) if pa[i] != pb[i])
+    return diffs / ((len(pa) + stride - 1) // stride)
+
+
+# rust-vs-glsl diff is a match when it stays under the glsl-vs-glsl
+# baseline scaled by NOISE_FACTOR plus a small absolute slack
+NOISE_FACTOR = 2.0
+NOISE_SLACK = 0.005
 
 
 def compare_one(example: str, bin_dir: Path) -> dict:
@@ -128,22 +160,42 @@ def compare_one(example: str, bin_dir: Path) -> dict:
         result["status"] = "match" if payloads["glsl"] == payloads["rust"] and payloads["glsl"] else "MISMATCH"
         return result
 
-    # Windowed: benchmark mode, compare health + record fps.
-    for shaders in ("glsl", "rust"):
-        r = run_example(binary, shaders, REPO, windowed=True)
-        result["runs"][shaders] = {
-            "exit": r["exit"], "timeout": r["timeout"], "fps": fps_from(r["stdout"]),
-            "stderr_tail": r["stderr"][-500:],
-        }
-    g, ru = result["runs"]["glsl"], result["runs"]["rust"]
-    ok_g = g["exit"] == 0 and not g["timeout"]
+    # Windowed: benchmark mode + screenshot capture.
+    # glsl runs twice (baseline noise) and rust once; screenshots diffed.
+    with tempfile.TemporaryDirectory() as td:
+        shots = {}
+        for tag, shaders in (("glsl_a", "glsl"), ("glsl_b", "glsl"), ("rust", "rust")):
+            shot = Path(td) / f"{tag}.ppm"
+            r = run_example(binary, shaders, REPO, windowed=True, screenshot=shot)
+            result["runs"][tag] = {
+                "shaders": shaders, "exit": r["exit"], "timeout": r["timeout"],
+                "fps": fps_from(r["stdout"]), "stderr_tail": r["stderr"][-500:],
+            }
+            shots[tag] = shot.read_bytes() if shot.exists() else None
+    a, b, ru = result["runs"]["glsl_a"], result["runs"]["glsl_b"], result["runs"]["rust"]
+    ok_g = a["exit"] == 0 and not a["timeout"]
     ok_r = ru["exit"] == 0 and not ru["timeout"]
-    if ok_g and ok_r:
-        result["status"] = "match"
+    # also record under "glsl"/"rust" keys so the summary printer works
+    result["runs"]["glsl"] = a
+    if not ok_g and not ok_r:
+        result["status"] = "both-fail"
     elif ok_g != ok_r:
         result["status"] = "MISMATCH"
+    elif shots["glsl_a"] is None or shots["rust"] is None:
+        result["status"] = "missing-output"
     else:
-        result["status"] = "both-fail"
+        d_rg = ppm_diff(shots["rust"], shots["glsl_a"])
+        d_gg = ppm_diff(shots["glsl_b"], shots["glsl_a"]) if shots["glsl_b"] else None
+        result["diff_rust_vs_glsl"] = d_rg
+        result["diff_glsl_baseline"] = d_gg
+        if d_rg is None:
+            result["status"] = "uncomparable"
+        elif d_rg == 0:
+            result["status"] = "match"
+        else:
+            baseline = d_gg if d_gg is not None else 0.0
+            limit = max(baseline * NOISE_FACTOR, baseline + NOISE_SLACK)
+            result["status"] = "match" if d_rg <= limit else "MISMATCH"
     return result
 
 
