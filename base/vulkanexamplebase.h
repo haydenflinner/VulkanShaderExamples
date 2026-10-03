@@ -110,6 +110,8 @@ protected:
 				case VK_SHADER_STAGE_GEOMETRY_BIT: return "main_gs";
 				case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT: return "main_tcs";
 				case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return "main_tes";
+				case VK_SHADER_STAGE_MESH_BIT_EXT: return "main_mesh";
+				case VK_SHADER_STAGE_TASK_BIT_EXT: return "main_task";
 				default: return "main";
 			}
 		}

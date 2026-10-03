@@ -184,7 +184,7 @@ public:
 			shaderCreateInfos[0].codeType = VK_SHADER_CODE_TYPE_BINARY_EXT;
 			shaderCreateInfos[0].pCode = shaderCodes[0];
 			shaderCreateInfos[0].codeSize = shaderCodeSizes[0];
-			shaderCreateInfos[0].pName = "main";
+			shaderCreateInfos[0].pName = getShaderEntryPoint(VK_SHADER_STAGE_VERTEX_BIT);
 			shaderCreateInfos[0].setLayoutCount = 1;
 			shaderCreateInfos[0].pSetLayouts = &descriptorSetLayout;
 
@@ -197,7 +197,7 @@ public:
 			shaderCreateInfos[1].codeType = VK_SHADER_CODE_TYPE_BINARY_EXT;
 			shaderCreateInfos[1].pCode = shaderCodes[1];
 			shaderCreateInfos[1].codeSize = shaderCodeSizes[1];
-			shaderCreateInfos[1].pName = "main";
+			shaderCreateInfos[1].pName = getShaderEntryPoint(VK_SHADER_STAGE_FRAGMENT_BIT);
 			shaderCreateInfos[1].setLayoutCount = 1;
 			shaderCreateInfos[1].pSetLayouts = &descriptorSetLayout;
 
@@ -221,7 +221,7 @@ public:
 			shaderCreateInfos[0].codeType = VK_SHADER_CODE_TYPE_SPIRV_EXT;
 			shaderCreateInfos[0].pCode = shaderCodes[0];
 			shaderCreateInfos[0].codeSize = shaderCodeSizes[0];
-			shaderCreateInfos[0].pName = "main";
+			shaderCreateInfos[0].pName = getShaderEntryPoint(VK_SHADER_STAGE_VERTEX_BIT);
 			shaderCreateInfos[0].setLayoutCount = 1;
 			shaderCreateInfos[0].pSetLayouts = &descriptorSetLayout;
 
@@ -234,7 +234,7 @@ public:
 			shaderCreateInfos[1].codeType = VK_SHADER_CODE_TYPE_SPIRV_EXT;
 			shaderCreateInfos[1].pCode = shaderCodes[1];
 			shaderCreateInfos[1].codeSize = shaderCodeSizes[1];
-			shaderCreateInfos[1].pName = "main";
+			shaderCreateInfos[1].pName = getShaderEntryPoint(VK_SHADER_STAGE_FRAGMENT_BIT);
 			shaderCreateInfos[1].setLayoutCount = 1;
 			shaderCreateInfos[1].pSetLayouts = &descriptorSetLayout;
 

@@ -8,3 +8,5 @@ spirv-std = { workspace = true }
 
 [lib]
 crate-type = ["dylib"]
+[package.metadata.rust-gpu.build]
+capabilities = ["StorageImageReadWithoutFormat", "StorageImageWriteWithoutFormat", "ImageQuery"]

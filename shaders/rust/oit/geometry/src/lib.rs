@@ -1,7 +1,7 @@
 #![cfg_attr(target_arch = "spirv", no_std)]
 #![allow(clippy::missing_safety_doc)]
 
-use spirv_std::{spirv, glam::{vec4, Mat4, Vec3, Vec4, IVec2}, arch::atomic_i_add, Image};
+use spirv_std::{spirv, glam::{vec4, Mat4, Vec3, Vec4, IVec2, UVec4}, arch::atomic_i_add, Image};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -52,7 +52,13 @@ pub fn main_fs(
     #[spirv(push_constant)] push_consts: &PushConsts,
 ) {
     // Increase the node count
-    let node_idx = unsafe { atomic_i_add(&mut geometry_sbo.count, 1) };
+    let node_idx = unsafe {
+        atomic_i_add::<
+            u32,
+            { spirv_std::memory::Scope::Device as u32 },
+            { spirv_std::memory::Semantics::NONE.bits() },
+        >(&mut geometry_sbo.count, 1)
+    };
 
     // Check LinkedListSBO is full
     if node_idx < geometry_sbo.max_node_count {
@@ -66,7 +72,7 @@ pub fn main_fs(
             // The GLSL uses imageAtomicExchange which is not directly available in rust-gpu
             // We'll use a simple read for now and note this limitation
             let current = head_index_image.read(coord).x;
-            head_index_image.write(coord, node_idx.into());
+            head_index_image.write(coord, UVec4::new(node_idx, 0, 0, 0));
             current
         };
 

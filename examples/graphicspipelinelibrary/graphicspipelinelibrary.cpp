@@ -224,7 +224,7 @@ public:
 			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			shaderStageCI.pNext = &shaderModuleCI;
 			shaderStageCI.stage = VK_SHADER_STAGE_VERTEX_BIT;
-			shaderStageCI.pName = "main";
+			shaderStageCI.pName = getShaderEntryPoint(VK_SHADER_STAGE_VERTEX_BIT);
 
 			VkGraphicsPipelineCreateInfo pipelineLibraryCI{};
 			pipelineLibraryCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -308,7 +308,7 @@ public:
 		shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		shaderStageCI.pNext = &shaderModuleCI;
 		shaderStageCI.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		shaderStageCI.pName = "main";
+		shaderStageCI.pName = getShaderEntryPoint(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Select lighting model using a specialization constant
 		srand(benchmark.active ? 0 : ((unsigned int)time(NULL)));
