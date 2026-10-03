@@ -33,7 +33,9 @@ pub fn main_fs(
     #[spirv(uniform, descriptor_set = 0, binding = 2)] ubo: &Ubo,
     out_color: &mut Vec4,
 ) {
-    let coord = spirv_std::glam::IVec2::new(frag_coord.x as i32, frag_coord.y as i32);
+    // OpImageRead on SubpassData requires coordinate (0,0); the read uses the
+    // fragment's own location implicitly (like GLSL subpassLoad).
+    let coord = spirv_std::glam::IVec2::ZERO;
 
     // Apply brightness and contrast filter to color input
     if ubo.attachment_index == 0 {
