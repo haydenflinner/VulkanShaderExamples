@@ -401,6 +401,11 @@ public:
 	/** @brief Presents the current image to the swap chain */
 	void submitFrame(bool skipQueueSubmit = false);
 
+	/** When set via --screenshot, the last presented frame is written to this .ppm file at the end of the run */
+	std::string screenshotFilename{};
+	/** @brief Blits the last presented swap chain image to a host visible image and saves it as a .ppm (portable pixmap) file */
+	void saveScreenshot(const char* filename);
+
 	/** @brief (Virtual) Called when the UI overlay is updating, can be used to add custom elements to the overlay */
 	virtual void OnUpdateUIOverlay(vks::UIOverlay *overlay);
 
