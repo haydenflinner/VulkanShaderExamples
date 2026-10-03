@@ -16,7 +16,8 @@ pub struct UBO {
 pub fn main_vs(
     #[spirv(vertex_index)] _vertex_index: i32,
     in_pos: Vec4,
-    in_normal: Vec3,
+    // GLSL puts inNormal at location 2 (location 1 unused by this pipeline).
+    #[spirv(location = 2)] in_normal: Vec3,
     #[spirv(uniform, descriptor_set = 0, binding = 0)] ubo: &UBO,
     #[spirv(position, invariant)] out_position: &mut Vec4,
 ) {

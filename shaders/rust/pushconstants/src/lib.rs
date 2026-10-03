@@ -32,9 +32,10 @@ pub fn main_vs(
     out_color: &mut Vec3,
 ) {
     *out_color = in_color * push_consts.color.truncate();
-    let loc_pos = ubo.model * Vec4::new(in_pos.x, in_pos.y, in_pos.z, 1.0);
-    let world_pos = loc_pos + push_consts.position;
-    *out_position = ubo.projection * ubo.view * world_pos;
+    let loc_pos = (ubo.model * Vec4::new(in_pos.x, in_pos.y, in_pos.z, 1.0)).truncate();
+    // GLSL adds only position.xyz and repacks w=1.0 — don't propagate .w.
+    let world_pos = loc_pos + push_consts.position.truncate();
+    *out_position = ubo.projection * ubo.view * Vec4::new(world_pos.x, world_pos.y, world_pos.z, 1.0);
 }
 
 #[spirv(fragment)]

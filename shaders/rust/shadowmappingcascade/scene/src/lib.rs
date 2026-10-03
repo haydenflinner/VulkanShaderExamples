@@ -146,11 +146,15 @@ pub fn main_fs(
 
     // Get cascade index for the current fragment's view position
     let mut cascade_index = 0u32;
+    // GLSL loop assigns cascadeIndex for every matching split, so the last
+    // matching split wins — these must be independent ifs, not an else-if chain.
     if in_view_pos.z < ubo.cascade_splits.x {
         cascade_index = 1;
-    } else if in_view_pos.z < ubo.cascade_splits.y {
+    }
+    if in_view_pos.z < ubo.cascade_splits.y {
         cascade_index = 2;
-    } else if in_view_pos.z < ubo.cascade_splits.z {
+    }
+    if in_view_pos.z < ubo.cascade_splits.z {
         cascade_index = 3;
     }
 
