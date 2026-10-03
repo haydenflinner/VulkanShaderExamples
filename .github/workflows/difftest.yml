@@ -1,0 +1,50 @@
+name: Difftest
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  difftest:
+    name: Rust-vs-GLSL difftest (llvmpipe)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Install dependencies
+        run: |
+          sudo add-apt-repository ppa:kisak/turtle -y
+          sudo apt-get update -y -qq
+          sudo apt install -y libvulkan-dev vulkan-tools mesa-vulkan-drivers \
+            xvfb libgl1-mesa-dri libxcb-xfixes0-dev libxcb1-dev
+
+      - name: Build examples
+        run: |
+          cmake -B build
+          cmake --build build -j"$(nproc)"
+
+      - name: Run difftest under Xvfb + llvmpipe
+        # Compares --shaders rust output against --shaders glsl for every
+        # example with a Rust port. Fails only on regressions vs the
+        # checked-in baseline (tools/difftest-baseline.json); improvements
+        # are reported in the log. Regenerate the baseline with
+        #   tools/difftest.py --write-baseline tools/difftest-baseline.json
+        run: |
+          xvfb-run -a python3 tools/difftest.py \
+            --baseline tools/difftest-baseline.json \
+            --json difftest-results.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: difftest-results
+          path: difftest-results.json

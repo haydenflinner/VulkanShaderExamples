@@ -227,13 +227,27 @@ def main() -> int:
     ap.add_argument("--bin-dir", default=str(REPO / "build" / "bin"))
     ap.add_argument("--examples", nargs="*", default=None)
     ap.add_argument("--json", dest="json_out", default=None)
+    ap.add_argument("--baseline", default=None,
+                    help="JSON file mapping example -> expected status. A run "
+                         "fails only when an example regresses relative to the "
+                         "baseline (or a new MISMATCH appears); improvements "
+                         "are reported but do not fail. Generate or refresh "
+                         "with --write-baseline.")
+    ap.add_argument("--write-baseline", metavar="FILE", default=None,
+                    help="Write the observed statuses to FILE as the baseline "
+                         "and exit 0.")
     args = ap.parse_args()
 
     bin_dir = Path(args.bin_dir)
     examples = args.examples or rust_covered_examples()
     results = [compare_one(ex, bin_dir) for ex in examples]
 
+    baseline = {}
+    if args.baseline:
+        baseline = json.loads(Path(args.baseline).read_text())
+
     counts = {}
+    regressions, improvements = [], []
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
         line = f"{r['status']:>13}  {r['example']}"
@@ -244,10 +258,38 @@ def main() -> int:
             g_fps = r["runs"]["glsl"].get("fps")
             if fps is not None and g_fps:
                 line += f"  (fps glsl={g_fps:.0f} rust={fps:.0f})"
+        expected = baseline.get(r["example"])
+        if expected and r["status"] != expected:
+            regressed = (r["status"] == "MISMATCH" and expected != "MISMATCH") or (
+                expected in ("match", "missing-output", "uncomparable")
+                and r["status"] not in ("match", expected))
+            (regressions if regressed else improvements).append(
+                f"{r['example']} ({expected} -> {r['status']})")
+            line += f"  [baseline: {expected}]"
         print(line)
     print("\nsummary:", json.dumps(counts))
+
+    if args.write_baseline:
+        Path(args.write_baseline).write_text(json.dumps(
+            {r["example"]: r["status"] for r in results}, indent=2,
+            sort_keys=True) + "\n")
+        print(f"baseline written to {args.write_baseline}")
+        return 0
+
+    if improvements:
+        print("\nchanges vs baseline (improvements / neutral):")
+        for s in improvements:
+            print("  ", s)
+    if regressions:
+        print("\nREGRESSIONS vs baseline:")
+        for s in regressions:
+            print("  ", s)
+        return 1
+
     if args.json_out:
         Path(args.json_out).write_text(json.dumps(results, indent=2))
+    if baseline:
+        return 0
     return 0 if counts.get("MISMATCH", 0) == 0 else 1
 
 
